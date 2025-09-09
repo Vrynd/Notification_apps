@@ -1,8 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:notification_app/service/http_service.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -49,7 +51,7 @@ class LocalNotificationService {
         false;
   }
 
-  // Request permission
+  // Request Permission Notifikasi Default
   Future<bool> _requestAndroidNotificationPermission() async {
     return await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -58,25 +60,71 @@ class LocalNotificationService {
         false;
   }
 
-  // Notification Request
+  // Request Permission Notifikasi Terjadwal
+  Future<bool?> _requestExactAlarmsPermission() async {
+    return await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestExactAlarmsPermission() ??
+        false;
+  }
+
+  // Notifikasi Request
   Future<bool?> requestPermission() async {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       final iOSImplementation =
           flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>();
       return await iOSImplementation?.requestPermissions(
-          alert: true, badge: true, sound: true);
+        alert: true,
+        badge: true,
+        sound: true,
+      );
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       final notificationEnabled = await _isAndroidPermissionGranted();
+      final requestAlarmEnabled =
+          await _requestExactAlarmsPermission() ?? false;
+
       if (!notificationEnabled) {
         final requestNotificationsPermission =
             await _requestAndroidNotificationPermission();
-        return requestNotificationsPermission;
+        return requestNotificationsPermission && requestAlarmEnabled;
       }
-      return notificationEnabled;
+      return notificationEnabled && requestAlarmEnabled;
     } else {
       return false;
     }
+  }
+
+  // Zona Waktu Perangkat
+  Future<void> configureLocalTimeZone() async {
+    tz.initializeTimeZones();
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+  }
+
+  // Atur Waktu Notifikasi
+  tz.TZDateTime _nextInstanceOfTenAM() {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  // Pending Notifikasi
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() async {
+    final List<PendingNotificationRequest> pendingNotificationRequests =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    return pendingNotificationRequests;
+  }
+
+  // Cancel Notifikasi
+  Future<void> cancelNotification(int id) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
   }
 
   // Show Notification
@@ -112,7 +160,7 @@ class LocalNotificationService {
     );
   }
 
-  // Pictur Notification
+  // Big Picture Notification
   Future<void> showBigPictureNotification({
     required int id,
     required String title,
@@ -160,6 +208,38 @@ class LocalNotificationService {
       body,
       notificationDetails,
       payload: payload,
+    );
+  }
+
+  // Notifikasi Terjadwal
+  Future<void> scheduleDailyTenAMNotification({
+    required int id,
+    String channelId = "3",
+    String channeName = "Schedule Notification",
+  }) async {
+    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      channelId,
+      channeName,
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    final iOSPlatformChannelSpecifics = DarwinNotificationDetails();
+
+    final notificationDetails = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics,
+    );
+
+    final datetimeSchedule = _nextInstanceOfTenAM();
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      'Daily scheduled notification title',
+      'This is a body of daily scheduled notification',
+      datetimeSchedule,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 }

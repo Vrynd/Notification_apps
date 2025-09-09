@@ -26,9 +26,12 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       Provider(create: (context) => HttpService()),
-      Provider(create: (context) => LocalNotificationService(
-        context.read<HttpService>(),
-      )..init()),
+      Provider(
+          create: (context) => LocalNotificationService(
+                context.read<HttpService>(),
+              )
+                ..init()
+                ..configureLocalTimeZone()),
       ChangeNotifierProvider(
           create: (context) => LocalNotificationProvider(
                 context.read<LocalNotificationService>(),
