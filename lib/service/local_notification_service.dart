@@ -77,6 +77,7 @@ class LocalNotificationService {
       channelName,
       importance: Importance.max,
       priority: Priority.high,
+      sound: RawResourceAndroidNotificationSound("slow_spring_board"),
     );
 
     const iOSPlatformChannelSpecifics = DarwinNotificationDetails();
