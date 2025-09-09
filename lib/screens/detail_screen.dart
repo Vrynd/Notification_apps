@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:notification_app/provider/payload_provider.dart';
+import 'package:provider/provider.dart';
 
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
@@ -7,6 +9,7 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final data = context.read<PayloadProvider>().payload;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detail Screen"),
@@ -19,7 +22,7 @@ class DetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "Payload: null",
+                  "Payload: $data",
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),

@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+final StreamController<String?> selectNotificationStream =
+    StreamController<String?>.broadcast();
 
 class LocalNotificationService {
   // Initialize
@@ -21,10 +26,16 @@ class LocalNotificationService {
       iOS: initializationSettingsDarwin,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings, onDidReceiveNotificationResponse: (notificationResponse) {
+      final payload = notificationResponse.payload;
+      if (payload != null && payload.isNotEmpty) {
+        selectNotificationStream.add(payload);
+      }
+
+    });
   }
 
-  // Permission access
+  // Periksa Permission aktif atau belum
   Future<bool> _isAndroidPermissionGranted() async {
     return await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -33,7 +44,7 @@ class LocalNotificationService {
         false;
   }
 
-  // Request permission
+  // Request permission 
   Future<bool> _requestAndroidNotificationPermission() async {
     return await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -77,7 +88,7 @@ class LocalNotificationService {
       channelName,
       importance: Importance.max,
       priority: Priority.high,
-      sound: RawResourceAndroidNotificationSound("slow_spring_board"),
+      sound: const RawResourceAndroidNotificationSound('slow_spring_board'),
     );
 
     const iOSPlatformChannelSpecifics = DarwinNotificationDetails();

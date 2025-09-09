@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:notification_app/provider/local_notification_provider.dart';
+import 'package:notification_app/provider/payload_provider.dart';
+import 'package:notification_app/service/local_notification_service.dart';
+import 'package:notification_app/static/my_route.dart';
 import 'package:notification_app/widgets/my_divider.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +14,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  void _configureSelectNotificationSubject() {
+    selectNotificationStream.stream.listen((String? payload) {
+      context.read<PayloadProvider>().payload = payload;
+      Navigator.pushNamed(context, MyRoute.detail.name, arguments: payload);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _configureSelectNotificationSubject();
+  }
+
+  @override
+  void dispose() {
+    selectNotificationStream.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
