@@ -144,9 +144,72 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<LocalNotificationProvider>().showBigPictureNotification();
   }
 
-  Future<void> _scheduleDailyTenAMNotification() async {}
+  // Show Scheduled Notification
+  Future<void> _scheduleDailyTenAMNotification() async {
+    context.read<LocalNotificationProvider>().scheduleDailyTenAMNotification();
+  }
 
-  Future<void> _checkPendingNotificationRequests() async {}
+  Future<void> _checkPendingNotificationRequests() async {
+    final localNotificationProvider = context.read<LocalNotificationProvider>();
+    await localNotificationProvider.checkPendingNotificationRequests(context);
+
+    if (!mounted) {
+      return;
+    }
+
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          final pendingData = context.select(
+              (LocalNotificationProvider provider) =>
+                  provider.pendingNotificationRequests);
+          return AlertDialog(
+            title: Text(
+              '${pendingData.length} pending notification requests',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            content: SizedBox(
+              height: 300,
+              width: 300,
+              child: ListView.builder(
+                itemCount: pendingData.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  final item = pendingData[index];
+                  return ListTile(
+                      title: Text(
+                        item.title ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        item.body ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      trailing: IconButton(
+                          onPressed: () {
+                            localNotificationProvider
+                              ..cancelNotification(item.id)
+                              ..checkPendingNotificationRequests(context);
+                          },
+                          icon: Icon(Icons.delete_outline)));
+                },
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        });
+  }
 
   void _runBackgroundOneOffTask() async {}
 
