@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:notification_app/service/local_notification_service.dart';
 
 class LocalNotificationProvider extends ChangeNotifier {
@@ -10,9 +11,24 @@ class LocalNotificationProvider extends ChangeNotifier {
   bool? _permission = false;
   bool? get permission => _permission;
 
+  List<PendingNotificationRequest> pendingNotificationRequests = [];
+
   // Request Permission
   Future<void> requestPermission() async {
     _permission = await flutterNotificationService.requestPermission();
+    notifyListeners();
+  }
+
+  // Aksi Pending Notification
+  Future<void> checkPendingNotificationRequests(BuildContext context) async {
+    pendingNotificationRequests =
+        await flutterNotificationService.pendingNotificationRequests();
+    notifyListeners();
+  }
+
+  // Candel Notification
+  Future<void> cancelNotification(int id) async {
+    await flutterNotificationService.cancelNotification(id);
     notifyListeners();
   }
 
@@ -36,6 +52,14 @@ class LocalNotificationProvider extends ChangeNotifier {
       body: "This is a new big picture notification with id $_notificationId",
       payload:
           "This is a payload from big picture notification with id $_notificationId",
+    );
+  }
+
+  // Show Notification dengan schedule
+  void scheduleNotification() {
+    _notificationId += 1;
+    flutterNotificationService.scheduleDailyTenAMNotification(
+      id: _notificationId,
     );
   }
 }
