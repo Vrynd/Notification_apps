@@ -139,7 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<LocalNotificationProvider>().showNotification();
   }
 
-  Future<void> _showBigPictureNotification() async {}
+  // Show Big Picture Notification
+  Future<void> _showBigPictureNotification() async {
+    context.read<LocalNotificationProvider>().showBigPictureNotification();
+  }
 
   Future<void> _scheduleDailyTenAMNotification() async {}
 

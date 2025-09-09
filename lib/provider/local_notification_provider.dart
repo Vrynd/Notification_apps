@@ -26,4 +26,16 @@ class LocalNotificationProvider extends ChangeNotifier {
         payload:
             "This is a payload from notification with id $_notificationId");
   }
+
+  // Show Notification dengan gambar
+  void showBigPictureNotification() {
+    _notificationId += 1;
+    flutterNotificationService.showBigPictureNotification(
+      id: _notificationId,
+      title: "New Big Picture Notification",
+      body: "This is a new big picture notification with id $_notificationId",
+      payload:
+          "This is a payload from big picture notification with id $_notificationId",
+    );
+  }
 }

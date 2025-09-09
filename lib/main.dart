@@ -26,7 +26,9 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       Provider(create: (context) => HttpService()),
-      Provider(create: (context) => LocalNotificationService()..init()),
+      Provider(create: (context) => LocalNotificationService(
+        context.read<HttpService>(),
+      )..init()),
       ChangeNotifierProvider(
           create: (context) => LocalNotificationProvider(
                 context.read<LocalNotificationService>(),

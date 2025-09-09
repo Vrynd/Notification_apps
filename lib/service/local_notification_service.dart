@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:notification_app/service/http_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -10,6 +11,10 @@ final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
 
 class LocalNotificationService {
+  final HttpService httpService;
+
+  LocalNotificationService(this.httpService);
+
   // Initialize
   Future<void> init() async {
     const initializationSettingsAndroid =
@@ -26,12 +31,12 @@ class LocalNotificationService {
       iOS: initializationSettingsDarwin,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings, onDidReceiveNotificationResponse: (notificationResponse) {
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: (notificationResponse) {
       final payload = notificationResponse.payload;
       if (payload != null && payload.isNotEmpty) {
         selectNotificationStream.add(payload);
       }
-
     });
   }
 
@@ -44,7 +49,7 @@ class LocalNotificationService {
         false;
   }
 
-  // Request permission 
+  // Request permission
   Future<bool> _requestAndroidNotificationPermission() async {
     return await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -96,6 +101,57 @@ class LocalNotificationService {
     final notificationDetails = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      id,
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
+  }
+
+  // Pictur Notification
+  Future<void> showBigPictureNotification({
+    required int id,
+    required String title,
+    required String body,
+    required String payload,
+    String channelId = "2",
+    String channelName = "Big Picture Notification",
+  }) async {
+    final String largePathIcon = await httpService.downloadAndSaveFile(
+        'https://dummyimage.com/48x48', 'largeIcon');
+
+    final String bigPicturePath = await httpService.downloadAndSaveFile(
+        'https://dummyimage.com/600x200', 'bigPicture.jpg');
+
+    final BigPictureStyleInformation bigPictureStyleInformation =
+        BigPictureStyleInformation(
+      FilePathAndroidBitmap(bigPicturePath),
+      largeIcon: FilePathAndroidBitmap(largePathIcon),
+      contentTitle: 'overridden <b>big</b> content title',
+      htmlFormatContentTitle: true,
+      summaryText: 'summary <i>text</i>',
+      htmlFormatSummaryText: true,
+    );
+
+    final androidPlatformChanneSpesifics = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      importance: Importance.max,
+      priority: Priority.high,
+      styleInformation: bigPictureStyleInformation,
+    );
+
+    final iOSPlatformChannelSpesifics = DarwinNotificationDetails(attachments: [
+      DarwinNotificationAttachment(bigPicturePath, hideThumbnail: false)
+    ]);
+
+    final notificationDetails = NotificationDetails(
+      android: androidPlatformChanneSpesifics,
+      iOS: iOSPlatformChannelSpesifics,
     );
 
     await flutterLocalNotificationsPlugin.show(
