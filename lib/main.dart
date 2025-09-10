@@ -5,6 +5,7 @@ import 'package:notification_app/screens/detail_screen.dart';
 import 'package:notification_app/screens/home_screen.dart';
 import 'package:notification_app/service/http_service.dart';
 import 'package:notification_app/service/local_notification_service.dart';
+import 'package:notification_app/service/workmanage_service.dart';
 import 'package:notification_app/static/my_route.dart';
 import 'package:provider/provider.dart';
 
@@ -38,6 +39,7 @@ void main() async {
               )..requestPermission()),
       ChangeNotifierProvider(
           create: (context) => PayloadProvider(payload: payload)),
+      Provider(create: (context) => WorkmanageService()..init()),
     ],
     child: App(
       initialRoute: route,
